@@ -51,22 +51,41 @@
    - **Password**: (your MQTT API key)
 
 ### MQTT Credentials Format
+
+**Recommended: SSL/TLS (Secure)**
 ```
 Broker: mqtt3.thingspeak.com
-Port: 1883 (non-SSL) or 8883 (SSL)
+Port: 8883 (SSL/TLS - RECOMMENDED)
+Client ID: <your-client-id>
+Username: <your-mqtt-username>
+Password: <your-mqtt-api-key>
+SSL/TLS: Enabled
+```
+
+**Alternative: Non-SSL (Not Recommended)**
+```
+Broker: mqtt3.thingspeak.com
+Port: 1883 (non-SSL - untuk debugging saja)
 Client ID: <your-client-id>
 Username: <your-mqtt-username>
 Password: <your-mqtt-api-key>
 ```
+
+**Security Benefits of SSL/TLS:**
+- ✅ Encrypted data transmission
+- ✅ Protection against man-in-the-middle attacks
+- ✅ Secure credential transmission
+- ✅ Certificate-based authentication
 
 ## 5. Configure ESP32
 
 Edit `scripts/config.py`:
 
 ```python
-# ThingSpeak MQTT Configuration
+# ThingSpeak MQTT Configuration with TLS/SSL
 THINGSPEAK_MQTT_BROKER = 'mqtt3.thingspeak.com'
-THINGSPEAK_MQTT_PORT = 1883
+THINGSPEAK_MQTT_PORT = 8883  # TLS/SSL port (use 1883 for non-SSL)
+THINGSPEAK_USE_SSL = True    # Enable TLS/SSL encryption
 THINGSPEAK_CHANNEL_ID = '1234567'  # Your channel ID
 THINGSPEAK_WRITE_API_KEY = 'XXXXXXXXXXXXXXXX'  # Your Write API Key
 THINGSPEAK_READ_API_KEY = 'XXXXXXXXXXXXXXXX'   # Your Read API Key
@@ -74,6 +93,15 @@ THINGSPEAK_MQTT_USERNAME = 'YourMQTTUsername'   # From MQTT settings
 THINGSPEAK_MQTT_PASSWORD = 'YourMQTTPassword'   # MQTT API Key
 THINGSPEAK_CLIENT_ID = 'AQP-001-CLIENT'         # Any unique ID
 ```
+
+**Important Notes:**
+- Set `THINGSPEAK_USE_SSL = True` untuk koneksi terenkripsi (RECOMMENDED)
+- Use port `8883` untuk SSL/TLS
+- Jika mengalami masalah koneksi, coba disable SSL terlebih dahulu untuk debugging:
+  ```python
+  THINGSPEAK_USE_SSL = False
+  THINGSPEAK_MQTT_PORT = 1883
+  ```
 
 ## 6. Field Mapping
 
@@ -103,6 +131,12 @@ Expected response: Entry ID number (e.g., `123`)
 
 Upload code dan check serial monitor:
 ```
+[MQTT] Client initialized
+  Broker: mqtt3.thingspeak.com:8883
+  SSL/TLS: Enabled
+  Channel: 1234567
+[MQTT] Connecting to broker...
+[MQTT] Using SSL/TLS encryption
 [MQTT] Connected successfully
 [MQTT] Publishing: field1=26.50&field2=6.80&field3=450&field4=1&field5=0&field6=1
 [MQTT] Data published successfully
@@ -194,7 +228,30 @@ GET https://api.thingspeak.com/channels/1234567/feeds.json?api_key=YOUR_READ_API
 ### "Connection Timeout"
 - Check internet connection
 - Verify broker address (mqtt3.thingspeak.com)
-- Try port 8883 (SSL) if 1883 fails
+- **For SSL/TLS (port 8883):**
+  - Ensure MicroPython firmware supports SSL (most recent versions do)
+  - Check free memory > 50KB (SSL requires more memory)
+  - Verify system time is set correctly (required for certificate validation)
+- **Fallback**: Try port 1883 (non-SSL) untuk debugging
+
+### "SSL Handshake Failed"
+- **Update MicroPython firmware** to latest version with SSL support
+- **Check system time**: SSL certificates require correct time
+  ```python
+  >>> import time
+  >>> time.localtime()  # Should show current time
+  ```
+- **Memory issue**: Free up memory before connecting
+  ```python
+  >>> import gc
+  >>> gc.collect()
+  >>> gc.mem_free()  # Should be > 50000
+  ```
+- **Temporary workaround**: Disable SSL untuk testing
+  ```python
+  THINGSPEAK_USE_SSL = False
+  THINGSPEAK_MQTT_PORT = 1883
+  ```
 
 ### "Unauthorized"
 - Verify MQTT username/password

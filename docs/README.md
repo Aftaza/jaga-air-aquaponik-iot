@@ -19,7 +19,8 @@ Sistem monitoring aquaponik berbasis IoT menggunakan ESP32 dan Flutter mobile ap
 - **Pembacaan Sensor**: Multi-sensor monitoring dengan interval yang dapat dikonfigurasi
 - **Kontrol Aktuator**: 2-channel relay untuk pompa dan lampu
 - **WiFi Connectivity**: Auto-connect dan auto-reconnect
-- **MQTT Client**: Publish data ke ThingSpeak dengan field mapping
+- **MQTT Client dengan SSL/TLS**: Publish data ke ThingSpeak dengan enkripsi TLS/SSL (port 8883)
+- **Secure Communication**: Semua data sensor dikirim melalui koneksi terenkripsi
 - **Threshold Checking**: Alert ketika nilai sensor melewati batas
 - **Watchdog Timer**: System recovery pada error
 
@@ -143,15 +144,18 @@ Lihat [THINGSPEAK_SETUP.md](THINGSPEAK_SETUP.md) untuk detail lengkap.
 - [ESP32 Setup Guide](ESP32_SETUP.md)
 - [Sensor Calibration](SENSOR_CALIBRATION.md)
 - [ThingSpeak Configuration](THINGSPEAK_SETUP.md)
+- [MQTT SSL/TLS Security](MQTT_SSL_SECURITY.md)
 - [Wiring Diagram](WIRING_DIAGRAM.md)
 - [Troubleshooting](TROUBLESHOOTING.md)
 
 ## ⚠️ Catatan Penting
 
+- **Security**: Sistem menggunakan koneksi MQTT terenkripsi (TLS/SSL) untuk keamanan data. Pastikan menggunakan port 8883 dan `THINGSPEAK_USE_SSL = True`.
 - **Mock Data**: Saat ini Flutter app menggunakan mock data service. Integrasi dengan ThingSpeak API akan ditambahkan di versi berikutnya.
 - **Calibration**: Sensor pH dan TDS memerlukan kalibrasi sebelum penggunaan. Lihat [SENSOR_CALIBRATION.md](SENSOR_CALIBRATION.md).
 - **Power Supply**: Gunakan adapter 5V 3A atau power bank dengan passthrough charging.
 - **WiFi**: Pastikan ESP32 dalam jangkauan WiFi yang stabil untuk koneksi MQTT yang reliable.
+- **SSL Memory**: Koneksi SSL/TLS memerlukan lebih banyak memory. Pastikan ESP32 memiliki free memory > 50KB.
 
 ## 📝 License
 

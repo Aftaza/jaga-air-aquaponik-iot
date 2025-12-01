@@ -1,30 +1,33 @@
 """
-MQTT Client for ThingSpeak
+MQTT Client for ThingSpeak with TLS/SSL Support
 Handles MQTT connection and data publishing to ThingSpeak
 
 Features:
-- Connect to ThingSpeak MQTT broker
+- Connect to ThingSpeak MQTT broker with TLS/SSL encryption
 - Publish sensor data
 - Subscribe to control commands
 - Auto-reconnect on disconnect
+- Secure communication using SSL/TLS
 """
 
 from umqtt.simple import MQTTClient
 import json
 import time
+import ussl
 
 class ThingSpeakMQTT:
-    def __init__(self, broker, port, username, password, client_id, channel_id):
+    def __init__(self, broker, port, username, password, client_id, channel_id, use_ssl=True):
         """
-        Initialize MQTT client for ThingSpeak
+        Initialize MQTT client for ThingSpeak with SSL/TLS support
         
         Args:
             broker: MQTT broker address
-            port: MQTT broker port
+            port: MQTT broker port (8883 for SSL, 1883 for non-SSL)
             username: MQTT username
             password: MQTT password (API key)
             client_id: Client ID
             channel_id: ThingSpeak channel ID
+            use_ssl: Enable SSL/TLS encryption (default: True)
         """
         self.broker = broker
         self.port = port
@@ -32,6 +35,7 @@ class ThingSpeakMQTT:
         self.password = password
         self.client_id = client_id
         self.channel_id = channel_id
+        self.use_ssl = use_ssl
         
         self.client = None
         self.connected = False
@@ -39,11 +43,12 @@ class ThingSpeakMQTT:
         
         print('[MQTT] Client initialized')
         print(f'  Broker: {broker}:{port}')
+        print(f'  SSL/TLS: {"Enabled" if use_ssl else "Disabled"}')
         print(f'  Channel: {channel_id}')
     
     def connect(self):
         """
-        Connect to MQTT broker
+        Connect to MQTT broker with optional SSL/TLS encryption
         
         Returns:
             True if connected successfully, False otherwise
@@ -55,14 +60,29 @@ class ThingSpeakMQTT:
         try:
             print('[MQTT] Connecting to broker...')
             
-            self.client = MQTTClient(
-                client_id=self.client_id,
-                server=self.broker,
-                port=self.port,
-                user=self.username,
-                password=self.password,
-                keepalive=60
-            )
+            # Create MQTT client with SSL/TLS support if enabled
+            if self.use_ssl:
+                print('[MQTT] Using SSL/TLS encryption')
+                self.client = MQTTClient(
+                    client_id=self.client_id,
+                    server=self.broker,
+                    port=self.port,
+                    user=self.username,
+                    password=self.password,
+                    keepalive=60,
+                    ssl=True,
+                    ssl_params={'server_hostname': self.broker}
+                )
+            else:
+                print('[MQTT] Using non-encrypted connection')
+                self.client = MQTTClient(
+                    client_id=self.client_id,
+                    server=self.broker,
+                    port=self.port,
+                    user=self.username,
+                    password=self.password,
+                    keepalive=60
+                )
             
             self.client.connect()
             self.connected = True

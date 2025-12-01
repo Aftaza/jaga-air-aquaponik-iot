@@ -41,14 +41,15 @@ class AquaponikSystem:
         # Initialize WiFi
         self.wifi = WiFiManager(config.WIFI_SSID, config.WIFI_PASSWORD)
         
-        # Initialize MQTT client
+        # Initialize MQTT client with SSL/TLS support
         self.mqtt = ThingSpeakMQTT(
             broker=config.THINGSPEAK_MQTT_BROKER,
             port=config.THINGSPEAK_MQTT_PORT,
             username=config.THINGSPEAK_MQTT_USERNAME,
             password=config.THINGSPEAK_MQTT_PASSWORD,
             client_id=config.THINGSPEAK_CLIENT_ID,
-            channel_id=config.THINGSPEAK_CHANNEL_ID
+            channel_id=config.THINGSPEAK_CHANNEL_ID,
+            use_ssl=config.THINGSPEAK_USE_SSL
         )
         
         # Initialize sensors

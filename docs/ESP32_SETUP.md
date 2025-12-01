@@ -62,12 +62,21 @@ Edit `scripts/config.py`:
 WIFI_SSID = 'YourWiFiName'
 WIFI_PASSWORD = 'YourWiFiPassword'
 
-# ThingSpeak Configuration
+# ThingSpeak MQTT Configuration with TLS/SSL
+THINGSPEAK_MQTT_BROKER = 'mqtt3.thingspeak.com'
+THINGSPEAK_MQTT_PORT = 8883  # TLS/SSL port (use 1883 for non-SSL)
+THINGSPEAK_USE_SSL = True    # Enable TLS/SSL encryption
 THINGSPEAK_CHANNEL_ID = '1234567'  # Your channel ID
 THINGSPEAK_WRITE_API_KEY = 'YOUR_WRITE_API_KEY'
 THINGSPEAK_MQTT_USERNAME = 'YOUR_MQTT_USERNAME'
 THINGSPEAK_MQTT_PASSWORD = 'YOUR_MQTT_API_KEY'
 ```
+
+**Security Notes:**
+- **TLS/SSL Enabled**: Sistem sekarang menggunakan koneksi MQTT terenkripsi (port 8883)
+- **Secure Communication**: Semua data sensor dikirim melalui koneksi terenkripsi TLS/SSL
+- **Certificate Validation**: MicroPython akan memvalidasi sertifikat server untuk keamanan maksimal
+- **Fallback Option**: Jika mengalami masalah dengan SSL, ubah `THINGSPEAK_USE_SSL = False` dan `THINGSPEAK_MQTT_PORT = 1883`
 
 Lihat [THINGSPEAK_SETUP.md](THINGSPEAK_SETUP.md) untuk mendapatkan credentials.
 
@@ -174,7 +183,12 @@ Firmware Version: 1.0.0
 [Relay] Initialized
 [WiFi] Connecting to YourWiFi...
 [WiFi] Connected successfully
+[MQTT] Client initialized
+  Broker: mqtt3.thingspeak.com:8883
+  SSL/TLS: Enabled
+  Channel: 1234567
 [MQTT] Connecting to broker...
+[MQTT] Using SSL/TLS encryption
 [MQTT] Connected successfully
 [System] Starting main loop...
 ```
@@ -226,6 +240,51 @@ Firmware Version: 1.0.0
 - Check wiring connections
 - Verify pin numbers dalam config.py
 - Test sensors individually di REPL
+
+### SSL/TLS Connection Issues
+
+**Error: "SSL handshake failed" atau "Connection timeout"**
+
+1. **Verify SSL is enabled in config.py:**
+   ```python
+   THINGSPEAK_USE_SSL = True
+   THINGSPEAK_MQTT_PORT = 8883
+   ```
+
+2. **Check MicroPython SSL support:**
+   ```python
+   >>> import ussl
+   >>> # If no error, SSL is supported
+   ```
+
+3. **Verify time is set correctly** (required for certificate validation):
+   ```python
+   >>> import time
+   >>> time.localtime()
+   # Should show current time, not 2000-01-01
+   ```
+
+4. **Test with non-SSL first** (untuk debugging):
+   ```python
+   THINGSPEAK_USE_SSL = False
+   THINGSPEAK_MQTT_PORT = 1883
+   ```
+
+5. **Memory issues**: SSL requires more memory, pastikan free memory > 50KB:
+   ```python
+   >>> import gc
+   >>> gc.collect()
+   >>> gc.mem_free()
+   ```
+
+6. **Update MicroPython firmware**: Gunakan versi terbaru yang support SSL/TLS
+
+**Error: "MQTT Connection refused"**
+
+- Verify MQTT credentials (username/password)
+- Check ThingSpeak channel ID
+- Ensure MQTT is enabled di ThingSpeak channel settings
+- Check firewall tidak memblokir port 8883
 
 ## Additional Resources
 
