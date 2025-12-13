@@ -78,6 +78,19 @@ THINGSPEAK_MQTT_PASSWORD = 'YOUR_MQTT_API_KEY'
 - **Certificate Validation**: MicroPython akan memvalidasi sertifikat server untuk keamanan maksimal
 - **Fallback Option**: Jika mengalami masalah dengan SSL, ubah `THINGSPEAK_USE_SSL = False` dan `THINGSPEAK_MQTT_PORT = 1883`
 
+**Sensor & Data Configuration:**
+- **MQTT Interval**: Data akan dikirim setiap **15 detik** ke ThingSpeak
+- **Dummy Data**: Jika sensor tidak terdeteksi, sistem akan **otomatis generate dummy data** untuk memastikan data tetap terkirim
+- **Sensor Availability**: Sistem akan mengecek ketersediaan sensor saat startup dan log statusnya
+
+```python
+# Update Intervals (seconds)
+SENSOR_READ_INTERVAL = 10     # Temperature reading interval
+PH_READ_INTERVAL = 15         # pH reading interval
+TDS_READ_INTERVAL = 15        # TDS reading interval
+MQTT_PUBLISH_INTERVAL = 15    # MQTT publish interval (every 15 seconds)
+```
+
 Lihat [THINGSPEAK_SETUP.md](THINGSPEAK_SETUP.md) untuk mendapatkan credentials.
 
 ## 3. Upload Code to ESP32
@@ -180,7 +193,17 @@ Firmware Version: 1.0.0
 
 [System] Initializing...
 [DS18B20] Found 1 device(s)
+[pH] Sensor initialized on pin 34
+[TDS] Sensor initialized on pin 32
+[FloatSwitch] Sensor initialized on pin 27
+[System] Sensor Status:
+  - DS18B20 Temperature: Available
+  - pH Sensor: Not found (using dummy)
+  - TDS Sensor: Not found (using dummy)
+  - Float Switch: Available
 [Relay] Initialized
+[System] Initialization complete
+[System] MQTT publish interval: 15 seconds
 [WiFi] Connecting to YourWiFi...
 [WiFi] Connected successfully
 [MQTT] Client initialized
@@ -191,6 +214,15 @@ Firmware Version: 1.0.0
 [MQTT] Using SSL/TLS encryption
 [MQTT] Connected successfully
 [System] Starting main loop...
+[Sensors] Temp: 26.5°C, Water: OK
+[pH] Generated dummy pH: 7.12
+[TDS] Generated dummy TDS: 423 ppm
+[MQTT] Publishing data:
+  Temp: 26.5°C
+  pH: 7.12 (dummy)
+  TDS: 423 ppm (dummy)
+  Water: OK
+[MQTT] Data published successfully
 ```
 
 ## 6. Testing

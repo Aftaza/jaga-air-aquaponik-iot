@@ -19,8 +19,10 @@ Sistem monitoring aquaponik berbasis IoT menggunakan ESP32 dan Flutter mobile ap
 - **Pembacaan Sensor**: Multi-sensor monitoring dengan interval yang dapat dikonfigurasi
 - **Kontrol Aktuator**: 2-channel relay untuk pompa dan lampu
 - **WiFi Connectivity**: Auto-connect dan auto-reconnect
-- **MQTT Client dengan SSL/TLS**: Publish data ke ThingSpeak dengan enkripsi TLS/SSL (port 8883)
+- **MQTT Client dengan SSL/TLS**: Publish data ke ThingSpeak setiap **15 detik** dengan enkripsi TLS/SSL (port 8883)
 - **Secure Communication**: Semua data sensor dikirim melalui koneksi terenkripsi
+- **Dummy Data Generation**: Otomatis generate data dummy jika sensor tidak terdeteksi
+- **Sensor Availability Check**: Mengecek ketersediaan sensor saat startup
 - **Threshold Checking**: Alert ketika nilai sensor melewati batas
 - **Watchdog Timer**: System recovery pada error
 
@@ -114,10 +116,14 @@ Lihat [THINGSPEAK_SETUP.md](THINGSPEAK_SETUP.md) untuk detail lengkap.
 
 | Sensor | Range | Akurasi | Update Interval |
 |--------|-------|---------|-----------------|
-| DS18B20 (Suhu) | -55°C to +125°C | ±0.5°C | 30 detik |
-| pH Meter | 0-14 pH | Linear 0-3.3V | 5 menit |
-| TDS Sensor | 0-1000 ppm | ±10% F.S. | 2 menit |
+| DS18B20 (Suhu) | -55°C to +125°C | ±0.5°C | 10 detik |
+| pH Meter | 0-14 pH | Linear 0-3.3V | 15 detik |
+| TDS Sensor | 0-1000 ppm | ±10% F.S. | 15 detik |
 | Float Switch | ON/OFF | Digital | Continuous |
+
+**⏱️ MQTT Publish Interval: 15 detik**
+
+> **Note**: Jika sensor tidak terdeteksi pada pin yang dikonfigurasi, sistem akan otomatis generate dummy data dengan nilai realistis untuk memastikan data tetap terkirim ke ThingSpeak.
 
 ## 🎯 Threshold Defaults
 

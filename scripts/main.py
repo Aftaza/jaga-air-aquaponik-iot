@@ -5,7 +5,8 @@ Monitors sensors and publishes data to ThingSpeak via MQTT
 Features:
 - Multi-sensor monitoring (Temperature, pH, TDS, Water Level)
 - Actuator control (Pump, Light)
-- MQTT data publishing to ThingSpeak
+- MQTT data publishing to ThingSpeak every 15 seconds
+- Automatic dummy data generation when sensors unavailable
 - WiFi auto-reconnect
 - Watchdog timer
 """
@@ -52,21 +53,26 @@ class AquaponikSystem:
             use_ssl=config.THINGSPEAK_USE_SSL
         )
         
-        # Initialize sensors
+        # Initialize sensors with dummy data enabled
         print('[System] Initializing sensors...')
-        self.temp_sensor = DS18B20Sensor(config.PIN_DS18B20)
+        self.temp_sensor = DS18B20Sensor(config.PIN_DS18B20, enable_dummy=True)
         self.ph_sensor = PHSensor(config.PIN_PH_SENSOR, 
-                                   voltage_calibration=config.PH_VOLTAGE_CALIBRATION)
+                                   voltage_calibration=config.PH_VOLTAGE_CALIBRATION,
+                                   enable_dummy=True)
         self.tds_sensor = TDSSensor(config.PIN_TDS_SENSOR, 
-                                     vref=config.TDS_VREF)
-        self.float_switch = FloatSwitch(config.PIN_FLOAT_SWITCH)
+                                     vref=config.TDS_VREF,
+                                     enable_dummy=True)
+        self.float_switch = FloatSwitch(config.PIN_FLOAT_SWITCH, enable_dummy=True)
+        
+        # Log sensor availability status
+        self._log_sensor_status()
         
         # Initialize actuators
         print('[System] Initializing actuators...')
         self.relay = RelayController(config.PIN_RELAY_PUMP, 
                                      config.PIN_RELAY_LIGHT)
         
-        # Sensor data
+        # Sensor data (will always have values due to dummy data)
         self.temperature = None
         self.ph = None
         self.tds = None
@@ -91,6 +97,15 @@ class AquaponikSystem:
             self.wdt = None
         
         print('[System] Initialization complete')
+        print(f'[System] MQTT publish interval: {config.MQTT_PUBLISH_INTERVAL} seconds')
+    
+    def _log_sensor_status(self):
+        """Log the availability status of all sensors"""
+        print('[System] Sensor Status:')
+        print(f'  - DS18B20 Temperature: {"Available" if self.temp_sensor.is_available() else "Not found (using dummy)"}')
+        print(f'  - pH Sensor: {"Available" if self.ph_sensor.is_available() else "Not found (using dummy)"}')
+        print(f'  - TDS Sensor: {"Available" if self.tds_sensor.is_available() else "Not found (using dummy)"}')
+        print(f'  - Float Switch: {"Available" if self.float_switch.is_available() else "Not found (using dummy)"}')
     
     def connect_network(self):
         """Connect to WiFi and MQTT"""
@@ -174,29 +189,40 @@ class AquaponikSystem:
         return alerts
     
     def publish_data(self):
-        """Publish sensor data to ThingSpeak via MQTT"""
+        """Publish sensor data to ThingSpeak via MQTT every 15 seconds"""
         current_time = time.time()
         
         if current_time - self.last_mqtt_publish >= config.MQTT_PUBLISH_INTERVAL:
-            # Only publish if we have valid data
-            if all(v is not None for v in [self.temperature, self.ph, self.tds, self.water_level]):
-                success = self.mqtt.publish_sensor_data(
-                    temperature=self.temperature,
-                    ph=self.ph,
-                    tds=self.tds,
-                    water_level=self.water_level,
-                    pump_status=self.relay.get_pump_status(),
-                    light_status=self.relay.get_light_status()
-                )
-                
-                if success:
-                    print('[MQTT] Data published successfully')
-                else:
-                    print('[MQTT] Failed to publish data')
-                
-                self.last_mqtt_publish = current_time
+            # Always publish data - sensors with dummy enabled will provide values
+            # Use default/fallback values if any sensor still returns None
+            temp = self.temperature if self.temperature is not None else 25.0
+            ph = self.ph if self.ph is not None else 7.0
+            tds = self.tds if self.tds is not None else 450
+            water_level = self.water_level if self.water_level is not None else True
+            
+            # Log what we're sending
+            if config.DEBUG:
+                print(f'[MQTT] Publishing data:')
+                print(f'  Temp: {temp}°C {"(dummy)" if self.temperature is None else ""}')
+                print(f'  pH: {ph} {"(dummy)" if self.ph is None else ""}')
+                print(f'  TDS: {tds} ppm {"(dummy)" if self.tds is None else ""}')
+                print(f'  Water: {"OK" if water_level else "LOW"} {"(dummy)" if self.water_level is None else ""}')
+            
+            success = self.mqtt.publish_sensor_data(
+                temperature=temp,
+                ph=ph,
+                tds=tds,
+                water_level=water_level,
+                pump_status=self.relay.get_pump_status(),
+                light_status=self.relay.get_light_status()
+            )
+            
+            if success:
+                print('[MQTT] Data published successfully')
             else:
-                print('[MQTT] Waiting for sensor data...')
+                print('[MQTT] Failed to publish data')
+            
+            self.last_mqtt_publish = current_time
         
         # Publish status (battery and RSSI) less frequently
         if current_time - self.last_status_update >= config.STATUS_UPDATE_INTERVAL:

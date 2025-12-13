@@ -11,9 +11,7 @@ Features:
 """
 
 from umqtt.simple import MQTTClient
-import json
 import time
-import ussl
 
 class ThingSpeakMQTT:
     def __init__(self, broker, port, username, password, client_id, channel_id, use_ssl=True):

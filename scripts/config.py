@@ -51,10 +51,10 @@ TDS_CRITICAL_MIN = 200
 TDS_CRITICAL_MAX = 800
 
 # Update Intervals (seconds)
-SENSOR_READ_INTERVAL = 30     # Temperature reading interval
-PH_READ_INTERVAL = 300        # pH reading interval (5 minutes)
-TDS_READ_INTERVAL = 120       # TDS reading interval (2 minutes)
-MQTT_PUBLISH_INTERVAL = 60    # MQTT publish interval
+SENSOR_READ_INTERVAL = 10     # Temperature reading interval (faster for 15s publish)
+PH_READ_INTERVAL = 15         # pH reading interval (match MQTT interval)
+TDS_READ_INTERVAL = 15        # TDS reading interval (match MQTT interval)
+MQTT_PUBLISH_INTERVAL = 15    # MQTT publish interval (every 15 seconds)
 STATUS_UPDATE_INTERVAL = 3600 # Battery/RSSI update (1 hour)
 
 # MQTT Topics
